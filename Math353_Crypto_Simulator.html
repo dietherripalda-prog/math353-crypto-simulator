@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Math 353 Cryptocurrency Risk Simulator</title>
+<style>
+:root{font-family:Arial,Helvetica,sans-serif;color:#20252b;background:#f5f6f8}*{box-sizing:border-box}body{max-width:850px;margin:0 auto;padding:16px;line-height:1.5}section{background:#fff;border:1px solid #dedfe3;border-radius:18px;padding:20px;margin:14px 0}h1{font-size:clamp(1.5rem,5vw,2rem);line-height:1.2;margin-top:0}h2{font-size:1.25rem;margin-top:0}label{display:block;font-weight:600;margin:14px 0 7px}input[type=number]{width:100%;max-width:360px;padding:12px 14px;font-size:1.05rem;border:1px solid #c8cbd0;border-radius:24px}input[type=range]{width:100%;accent-color:#222;margin:10px 0}.range-labels{display:flex;justify-content:space-between;font-size:.9rem;color:#555}.periods{display:flex;gap:14px;flex-wrap:wrap;margin:12px 0}.periods label{font-weight:400;margin:0}.results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;border-top:1px solid #eee;margin-top:20px;padding-top:18px}.green{font-size:clamp(1.35rem,5vw,2rem);font-weight:700;color:#087541;overflow-wrap:anywhere}.red{font-size:clamp(1.35rem,5vw,2rem);font-weight:700;color:#a12626;overflow-wrap:anywhere}.muted{color:#646970}.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;margin-top:12px}th,td{border-bottom:1px solid #e4e5e8;text-align:right;padding:9px 7px;white-space:nowrap}th:first-child,td:first-child{text-align:left}th{background:#f6f7f9}code{white-space:normal;overflow-wrap:anywhere}.callout{background:#f6f7f9;border-radius:12px;padding:12px}.small{font-size:.92rem}.error{color:#a12626;font-weight:600}
+</style>
+</head>
+<body>
+<section>
+<h1>Math 353: Cryptocurrency Risk Simulator</h1>
+<p>Investigate how hypothetical cryptocurrency prices can change over time as the percentage change and number of periods increase.</p>
+<p class="muted small">Educational mathematical model only. This is not financial advice or a prediction of real cryptocurrency prices.</p>
+</section>
+<section>
+<h2>Try the simulation</h2>
+<label for="price">Starting price (₱)</label>
+<input id="price" type="number" min="0.01" step="0.01" value="250" inputmode="decimal">
+<label for="vol">Volatility / percentage change per period: <span id="volText">15%</span></label>
+<input id="vol" type="range" min="1" max="50" step="1" value="15">
+<div class="range-labels"><span>1%</span><span>25%</span><span>50%</span></div>
+<label>Number of periods</label>
+<div class="periods">
+<label><input type="radio" name="period" value="3"> 3</label>
+<label><input type="radio" name="period" value="5"> 5</label>
+<label><input type="radio" name="period" value="10" checked> 10</label>
+<label><input type="radio" name="period" value="15"> 15</label>
+<label><input type="radio" name="period" value="20"> 20</label>
+<label><input type="radio" name="period" value="30"> 30</label>
+</div>
+<div class="results">
+<div><div class="muted">All periods rise</div><div id="up" class="green">—</div></div>
+<div><div class="muted">All periods fall</div><div id="down" class="red">—</div></div>
+</div>
+<p class="muted small">These are two extreme illustrative paths: the price rises by the selected percentage every period, or falls by that percentage every period. They are not probability estimates.</p>
+</section>
+<section>
+<h2>Price by period</h2>
+<p class="muted small">Compare the value at each period for the rising and falling scenarios.</p>
+<div class="table-wrap"><table><thead><tr><th>Period</th><th>Rising path</th><th>Falling path</th></tr></thead><tbody id="rows"></tbody></table></div>
+</section>
+<section>
+<h2>Mathematical model</h2>
+<div class="callout"><p><b>Rising path:</b> <code>Pₙ = P₀(1 + r)ⁿ</code></p><p><b>Falling path:</b> <code>Pₙ = P₀(1 − r)ⁿ</code></p></div>
+<p>Where <b>P₀</b> is the starting price, <b>r</b> is the percentage change written as a decimal, and <b>n</b> is the number of periods.</p>
+<h3>Investigation questions</h3>
+<ol><li>What happens to the final price when volatility increases?</li><li>What happens when the number of periods increases?</li><li>How does the gap between the rising and falling paths change?</li><li>Why are these extreme scenarios not predictions of actual market prices?</li></ol>
+</section>
+<script>
+const priceInput=document.getElementById('price');
+const volInput=document.getElementById('vol');
+const volText=document.getElementById('volText');
+const upOut=document.getElementById('up');
+const downOut=document.getElementById('down');
+const rows=document.getElementById('rows');
+const peso=n=>Number.isFinite(n)?'₱'+n.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2}):'Value too large';
+function update(){
+ const p=Number(priceInput.value), r=Number(volInput.value)/100;
+ const selected=document.querySelector('input[name="period"]:checked');
+ const n=selected?Number(selected.value):10;
+ volText.textContent=volInput.value+'%';
+ if(priceInput.value.trim()===''||!Number.isFinite(p)||p<=0){upOut.textContent='Enter a price above zero';downOut.textContent='Enter a price above zero';rows.innerHTML='<tr><td colspan="3" class="error">Enter a valid starting price above zero.</td></tr>';return;}
+ upOut.textContent=peso(p*Math.pow(1+r,n));
+ downOut.textContent=peso(p*Math.pow(1-r,n));
+ let html='';
+ for(let i=0;i<=n;i++) html+=`<tr><td>${i}</td><td>${peso(p*Math.pow(1+r,i))}</td><td>${peso(p*Math.pow(1-r,i))}</td></tr>`;
+ rows.innerHTML=html;
+}
+priceInput.addEventListener('input',update);volInput.addEventListener('input',update);
+document.querySelectorAll('input[name="period"]').forEach(el=>el.addEventListener('change',update));
+update();
+</script>
+</body>
+</html>
